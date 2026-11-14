@@ -82,6 +82,7 @@ const manifestHref = () => document.querySelector('link[rel="manifest"]')?.getAt
 const SAMPLE_MANIFEST = {
   short_name: 'SullyOS',
   name: 'SullyOS',
+  display_override: ['fullscreen', 'standalone'],
   display: 'standalone' as const,
   theme_color: '#0f1115',
   background_color: '#0f1115',

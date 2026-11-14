@@ -203,4 +203,37 @@ describe('iOS 全屏 PWA 键盘态', () => {
         expect(inKeyboardMode()).toBe(false);
         expect(appHeight()).toBe(`${SCREEN_H}px`);
     });
+
+    it('Android fullscreen 在 env 为 0 时避开摄像头和导航条，同时外壳仍铺满可视区', async () => {
+        Object.defineProperty(navigator, 'userAgent', { value: 'Mozilla/5.0 (Linux; Android 16) AppleWebKit/537.36 Chrome/142.0 Mobile Safari/537.36', configurable: true });
+        window.matchMedia = ((query: string) => ({
+            matches: query.includes('fullscreen'), media: query,
+            addEventListener: () => {}, removeEventListener: () => {},
+        })) as typeof window.matchMedia;
+        vi.mocked(window.getComputedStyle).mockReturnValue({ paddingTop: '0px', paddingBottom: '0px' } as CSSStyleDeclaration);
+
+        await install();
+
+        expect(document.documentElement.style.getPropertyValue('--standalone-safe-area-top')).toBe('32px');
+        expect(document.documentElement.style.getPropertyValue('--standalone-safe-area-bottom')).toBe('24px');
+        expect(document.documentElement.style.getPropertyValue('--shell-bottom-inset')).toBe('0px');
+        expect(appHeight()).toBe(`${SCREEN_H}px`);
+        expect(visibleAppHeight()).toBe(`${SCREEN_H}px`);
+    });
+
+    it('Android fullscreen 优先使用设备报告的真实顶部和底部安全区', async () => {
+        Object.defineProperty(navigator, 'userAgent', { value: 'Mozilla/5.0 (Linux; Android 16) AppleWebKit/537.36 Chrome/142.0 Mobile Safari/537.36', configurable: true });
+        window.matchMedia = ((query: string) => ({
+            matches: query.includes('fullscreen'), media: query,
+            addEventListener: () => {}, removeEventListener: () => {},
+        })) as typeof window.matchMedia;
+        vi.mocked(window.getComputedStyle).mockReturnValue({ paddingTop: '36px', paddingBottom: '48px' } as CSSStyleDeclaration);
+
+        await install();
+
+        expect(document.documentElement.style.getPropertyValue('--standalone-safe-area-top')).toBe('36px');
+        expect(document.documentElement.style.getPropertyValue('--standalone-safe-area-bottom')).toBe('48px');
+        expect(document.documentElement.style.getPropertyValue('--shell-bottom-inset')).toBe('0px');
+        expect(appHeight()).toBe(`${SCREEN_H}px`);
+    });
 });

@@ -933,9 +933,9 @@ const Launcher: React.FC<{ staticPreview?: boolean }> = ({ staticPreview = false
   const contentColor = theme.contentColor || '#ffffff';
   const acnh = theme.skin === 'animalcrossing'; // 动森彩蛋：Dock 换奶油木质底
   const paper = theme.skin !== 'animalcrossing' && theme.skin !== 'mobilegame' && theme.skin !== 'tamagotchi' && isPaperWallpaper(theme.wallpaper);
-  // 已迁移 App 外壳已收回到可见 viewport 底边，dock 仅需自留视觉间距，无需再 + safe-bottom
-  // （否则会比 home 条上方多让 34px，dock 看起来悬空）。
-  const launcherBottomInset = '1.25rem';
+  // iOS 外壳已裁掉底部安全区，保持原来的视觉间距；Android 全屏/native 则由 Dock 自己
+  // 避开手势条或导航键，背景继续铺到屏幕底边，不把内容压在手势区域里。
+  const launcherBottomInset = 'max(1.25rem, calc(0.75rem + var(--safe-bottom, 0px) - var(--shell-bottom-inset, 0px)))';
   
   const totalUnread = Object.values(unreadMessages).reduce((a, b) => a + b, 0);
   const widgetUnread = widgetChar && unreadMessages[widgetChar.id] ? unreadMessages[widgetChar.id] : 0;

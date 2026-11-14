@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core';
+
 let hasInstalledIOSStandaloneWorkaround = false;
 let stableStandaloneHeight = 0;
 // 这台设备要不要做键盘避让（iOS 全屏 PWA / 安卓浏览器）。装载时定下，
@@ -58,7 +60,8 @@ export const isIOSDevice = (): boolean => {
 
 export const isStandaloneDisplayMode = (): boolean => {
     if (typeof window === 'undefined') return false;
-    return window.matchMedia?.('(display-mode: standalone)').matches || !!(window.navigator as Navigator & { standalone?: boolean }).standalone;
+    return window.matchMedia?.('(display-mode: standalone), (display-mode: fullscreen)').matches
+        || !!(window.navigator as Navigator & { standalone?: boolean }).standalone;
 };
 
 export const isIOSStandaloneWebApp = (): boolean => isIOSDevice() && isStandaloneDisplayMode();
@@ -115,10 +118,16 @@ const setViewportVars = () => {
         cachedTopInset = null;
         cachedBottomInset = null;
     }
-    // 单次探针读取上下安全区。顶部 env 偶发返回 0，探测不到时退回 44px（约状态栏/刘海高度），避免顶栏内容怼进刘海。
-    const safeInsets = shouldStabilizeHeight ? readSafeAreaInsets() : { top: 0, bottom: 0 };
-    const bottomSafeInset = safeInsets.bottom;
-    const topSafeInset = shouldStabilizeHeight ? (safeInsets.top > 0 ? safeInsets.top : containedStatusBar ? 0 : 44) : 0;
+    // Android 全屏 PWA / Capacitor 也可能把 env 报成 0。只在真正铺满系统栏的场景给
+    // 摄像头和手势导航留最小安全区；普通浏览器仍由浏览器 chrome 自己占位，不重复留白。
+    const nativePlatform = Capacitor.isNativePlatform();
+    const androidFullScreen = isAndroidDevice() && (nativePlatform || isStandaloneDisplayMode());
+    const shouldReadSafeArea = shouldStabilizeHeight || nativePlatform || androidFullScreen;
+    const safeInsets = shouldReadSafeArea ? readSafeAreaInsets() : { top: 0, bottom: 0 };
+    const bottomSafeInset = safeInsets.bottom > 0 ? safeInsets.bottom : androidFullScreen ? 24 : 0;
+    const topSafeInset = shouldStabilizeHeight
+        ? (safeInsets.top > 0 ? safeInsets.top : containedStatusBar ? 0 : 44)
+        : safeInsets.top > 0 ? safeInsets.top : androidFullScreen ? 32 : 0;
 
     let fullAppHeight: number;
     let keyboardInset: number;
@@ -186,6 +195,9 @@ const setViewportVars = () => {
     document.documentElement.style.setProperty('--keyboard-inset', `${keyboardInset}px`);
     document.documentElement.style.setProperty('--standalone-safe-area-bottom', `${bottomSafeInset}px`);
     document.documentElement.style.setProperty('--standalone-safe-area-top', `${topSafeInset}px`);
+    // 只有 iOS standalone 的 body 会额外多出一段 home 安全区，需要外壳收回底边。
+    // Android 的 app-height 已经是实际可视高度，外壳必须继续铺满，由 App 自己避让导航条。
+    document.documentElement.style.setProperty('--shell-bottom-inset', shouldStabilizeHeight ? `${bottomSafeInset}px` : '0px');
 };
 
 export const installIOSStandaloneWorkaround = () => {

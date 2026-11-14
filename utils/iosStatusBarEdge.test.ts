@@ -76,9 +76,10 @@ describe('status bar edge lifecycle', () => {
         expect(edge.style.backgroundColor).toBe('rgb(240, 230, 220)');
     });
 
-    it('contains manifest standalone before layout and restores the viewport on cleanup', async () => {
+    it.each(['standalone', 'fullscreen'])('contains manifest %s before layout and restores the viewport on cleanup', async displayMode => {
         document.head.innerHTML = '<meta name="viewport" content="width=device-width, viewport-fit=cover">';
-        window.matchMedia = vi.fn().mockReturnValue({ matches: true });
+        Object.defineProperty(navigator, 'standalone', { configurable: true, value: false });
+        window.matchMedia = vi.fn().mockImplementation((query: string) => ({ matches: query.includes(displayMode) }));
         cleanup = installIOSStatusBarEdge();
         expect(document.querySelector('meta[name="viewport"]')!.getAttribute('content')).toBe('width=device-width, viewport-fit=contain');
         expect(document.documentElement.hasAttribute('data-ios-status-bar-contained')).toBe(true);

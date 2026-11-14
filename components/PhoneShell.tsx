@@ -1111,14 +1111,14 @@ const PhoneShell: React.FC = () => {
        {/* 外壳安全区两种策略：
           - 未迁移 App：外壳铺满 body（含 --app-height 多出的 +safe-bottom 溢出区），用 padding 让位安全区，
             内容只画到可见 viewport 内，home 条上方留出 safe-bottom 视觉间隙。
-          - 已迁移 App（彼方/聊天/群聊/桌面）：自理安全区。外壳直接把底边收回到可见 viewport
-            （bottom = --standalone-safe-area-bottom），不让那多出来的 34px 把 App 底部控件压到 home 条上。 */}
+          - 已迁移 App（彼方/聊天/群聊/桌面）：自理安全区。iOS 外壳把底边收回到可见 viewport
+            （bottom = --shell-bottom-inset），Android 不做这段额外裁剪，背景铺满且由 App 避让导航条。 */}
       <div
         className="sully-shell-content absolute top-0 left-0 right-0 z-10 overflow-hidden bg-transparent overscroll-none flex flex-col"
         style={
           shellPadsSafeArea
             ? { bottom: 0, paddingTop: 'var(--safe-top)', paddingBottom: 'var(--safe-bottom)' }
-            : { bottom: 'var(--standalone-safe-area-bottom, 0px)' }
+            : { bottom: 'var(--shell-bottom-inset, 0px)' }
         }
       >
           <FirstUseGuide />

@@ -121,7 +121,7 @@ export const installIOSStatusBarEdge = (): (() => void) => {
     // Contain keeps web content below the native bar; install before measuring safe areas.
     const viewport = document.querySelector<HTMLMetaElement>('meta[name="viewport"]');
     const previousViewport = viewport?.content;
-    const contained = !!viewport && !!window.matchMedia?.('(display-mode: standalone)').matches;
+    const contained = !!viewport && !!window.matchMedia?.('(display-mode: standalone), (display-mode: fullscreen)').matches;
     if (contained) {
         viewport.content = /viewport-fit\s*=\s*[^,]+/.test(viewport.content)
             ? viewport.content.replace(/viewport-fit\s*=\s*[^,]+/, 'viewport-fit=contain')
